@@ -14,13 +14,13 @@ export default function ApiConnector(path: string, params: any, method: string, 
       data: data,
       headers: headers,
     })
-      .then(response => {
+      .then(response => {        
         return response.data;
       })
       .catch(error => {
         if (error.response && error.response.status === 401) {
           //handleUnauthorizedError();
         }
-        throw error;
+        return error.response.data;
       });
   }

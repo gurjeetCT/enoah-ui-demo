@@ -3,22 +3,21 @@ import ApiConnector from '../services/ApiConnector'
 import { constants } from "../Utility/ApiConstants";
 import { useForm } from "react-hook-form";
 import Select from "react-select";
+import Button from 'react-bootstrap/Button';
+import { AppModalProps, ConversionRecord } from "../Utility/CommonProps";
+import AppModal from "../AppModal";
 
-type UnitConverter = {
-  sourceUnitId: number;
-  targetUnitId: number;
-  unitTypeId:number;
-  inputValue:number;
-  userName:string;
-}
+
 const UnitConverter: React.FC = () => {
   
-  const {register, handleSubmit, formState: { errors }, formState } = useForm<UnitConverter>()  
+  const {register, handleSubmit, formState: { errors }, formState } = useForm<ConversionRecord>()  
   const [unitSubTypes, setUnitSubTypes] = useState([]);
   const [unitTypes, setUnitTypes] = useState([]);
   const [unitTypeState, setUnitTypeId] = useState<any>({});
   const [sourceUnitState, setsourceUnitId] = useState<any>({label:'',value:-1});
   const [targetUnitState, setTargetUnitId] = useState<any>({});
+  const defaultModal : AppModalProps= {title:'Unit Conversion', content:constants.defaultMessage,isShow:false};
+  const [modalContent, setModalContent] = useState<AppModalProps>(defaultModal);
     
     const fetchUnitTypes = async () => {
       var url = constants.apiEndPoints.GET_ALL_UNIT_TYPES;        
@@ -32,16 +31,32 @@ const UnitConverter: React.FC = () => {
       setUnitSubTypes(resp.map((s:any) => ({value: s.unitDetailsId, label:s.unitName})));      
     };
   
+    const SetModal = (msg:string, flag:boolean) => {
+      console.log(msg);
+      defaultModal.content = msg;    
+      defaultModal.isShow = flag; 
+      setModalContent(defaultModal);    
+    };
     
-    const saveConversionRecord = handleSubmit((data:UnitConverter) => {    
-      if(sourceUnitState.value==-1 || targetUnitState.value==-1)alert('Select both units');
-      else if(sourceUnitState.value==targetUnitState.value)alert('Select different units');
-      else{
-      data.unitTypeId=unitTypeState.value;
-      data.sourceUnitId=sourceUnitState.value;
-      data.targetUnitId=targetUnitState.value;      
-      var url = constants.apiEndPoints.SAVE_CONVERSION_UNIT;        
-      return ApiConnector(url, null, constants.apiMethod.POST, JSON.stringify(data), 'dummyToken');
+    
+    const saveConversionRecord = handleSubmit(async (data:ConversionRecord) => {    
+      if(sourceUnitState.value ==-1 || targetUnitState.value == -1)        
+        SetModal('Select both units', true);
+              
+      else if(sourceUnitState.value==targetUnitState.value)        
+        SetModal('Select different units', true);
+      
+      else {
+        data.unitTypeId=unitTypeState.value;
+        data.sourceUnitId=sourceUnitState.value;
+        data.targetUnitId=targetUnitState.value;      
+        var url = constants.apiEndPoints.SAVE_CONVERSION_UNIT;        
+        const response = await ApiConnector(url, null, constants.apiMethod.POST, JSON.stringify(data), 'dummyToken');
+        console.log(response);
+        if(response.StatusCode == constants.statusCodes.INTERNAL_SERVER_ERROR)
+          SetModal(response.Message, true); 
+        else if(response.outputValue)  
+          SetModal('Result : ' + response.outputValue, true);        
       }
     })
   
@@ -50,27 +65,25 @@ const UnitConverter: React.FC = () => {
     },[unitTypeState]);
   
   return (
-    <div>
-      <h1>Unit Converter</h1>
+    <div>      
       <form onSubmit={saveConversionRecord}>          
-        <div>
-          <label htmlFor="unitTypeId">Select Unit Type</label>  
+        <div className="mb-3">
+          <label className="form-label" htmlFor="unitTypeId">Select Unit Type</label>  
           <Select
-                        className="item"                        
+                        className="form-control item"                                              
                         value={unitTypeState || unitTypeState.label || ''}
                         options={unitTypes}
-                        onChange={(evt:any)=>{    
-                          console.log(evt);                      
+                        onChange={(evt:any)=>{                                                  
                           setUnitTypeId(evt);
                           fetchUnitSubTypes(evt.value);
                         }}
                         defaultValue={unitTypeState || unitTypeState.value}
                     />
         </div>
-        <div>
-          <label htmlFor="sourceUnitId">Select Source</label>              
+        <div className="mb-3">
+          <label className="form-label" htmlFor="sourceUnitId">Select Source</label>              
             <Select
-                        className="item"                        
+                        className="form-control item"                                              
                         value={sourceUnitState || sourceUnitState.label || ''}
                         options={unitSubTypes}
                         onChange={(evt:any)=>{                          
@@ -80,10 +93,9 @@ const UnitConverter: React.FC = () => {
                     />
         </div>
 
-        <div>
-          <label htmlFor="targetUnitId">Select Target</label>  
-          <Select
-                        className="item"                        
+        <div className="mb-3">
+          <label className="form-label" htmlFor="targetUnitId">Select Target</label>  
+          <Select className="form-control item"                                              
                         value={targetUnitState||targetUnitState.label || ''}
                         options={unitSubTypes}
                         onChange={(evt:any)=>{                          
@@ -93,9 +105,9 @@ const UnitConverter: React.FC = () => {
                     />
         </div>   
 
-        <div>
-            <label htmlFor="inputValue">Input Value</label>
-            <input
+        <div className="mb-3">
+            <label className="form-label" htmlFor="inputValue">Input Value</label>
+            <input className="form-control"
               {...register("inputValue", { required: "Input is required" })}
               type="number"
               id="inputValue"
@@ -103,18 +115,21 @@ const UnitConverter: React.FC = () => {
             {errors.inputValue && <p>{errors.inputValue.message}</p>}
         </div>  
 
-        <div>
-            <label htmlFor="userName">User Name</label>
-            <input
+        <div className="mb-3">
+            <label className="form-label" htmlFor="userName">User Name</label>
+            <input className="form-control"
               {...register("userName", { required: "userName is required" })}
               type="text"
               id="userName"
             />
             {errors.userName && <p>{errors.userName.message}</p>}
         </div>  
-        <button type="submit">Submit</button>
+        <Button variant="primary" type="submit">Submit</Button>
       </form>
-      
+      {modalContent.isShow &&
+       <AppModal content={modalContent.content} title={modalContent.title} isShow={modalContent.isShow}
+       handleShow={()=>setModalContent({...modalContent,isShow:false})}       
+       />}
     </div>
   );
 };

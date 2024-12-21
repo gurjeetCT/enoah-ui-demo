@@ -2,23 +2,29 @@ import React, { useState, useEffect } from "react";
 import ApiConnector from '../services/ApiConnector'
 import { constants } from "../Utility/ApiConstants";
 import { useForm } from "react-hook-form";
-type UnitTypes = {
-  unitTypeName: string
-  unitTypeDescription: string
-}
+import Button from 'react-bootstrap/Button';
+import { AppModalProps, UnitTypeRecord } from "../Utility/CommonProps";
+import AppModal from "../AppModal";
+
+
 const UnitType: React.FC = () => {
-  const {register, handleSubmit, formState: { errors }, formState } = useForm<UnitTypes>()  
+  const {register, handleSubmit, formState: { errors }, formState } = useForm<UnitTypeRecord>()  
+  const defaultModal : AppModalProps= {title:'Unit Type', content:constants.defaultMessage,isShow:false};
+  const [modalContent, setModalContent] = useState<AppModalProps>(defaultModal);
 
   const fetchUnitTypes = async () => {
     var url = constants.apiEndPoints.GET_ALL_UNIT_TYPES;        
-    const resp = await ApiConnector(url, null, constants.apiMethod.GET, null, 'dummyToken');
-    console.log({dataRcvd:resp,method:'fetch'});
+    await ApiConnector(url, null, constants.apiMethod.GET, null, 'dummyToken');    
   };
 
   
-  const saveUnitTypes = handleSubmit((data) => {    
+  const saveUnitTypes = handleSubmit(async (data) => {     
     var url = constants.apiEndPoints.SAVE_UNIT_TYPE;        
-    return ApiConnector(url, null, constants.apiMethod.POST, JSON.stringify(data), 'dummyToken');
+    var response = await ApiConnector(url, null, constants.apiMethod.POST, JSON.stringify(data), 'dummyToken');
+    if(response.StatusCode == constants.statusCodes.INTERNAL_SERVER_ERROR)
+      defaultModal.content = response.Message;    
+    defaultModal.isShow = true; 
+    setModalContent(defaultModal);    
   })
 
   useEffect(()=>{
@@ -26,12 +32,11 @@ const UnitType: React.FC = () => {
   },[]);
 
   return (
-    <div>
-    <h1>Save Unit Types</h1>
+    <div>    
       <form onSubmit={saveUnitTypes}>      
-        <div>
-              <label htmlFor="unitTypeName">Name</label>
-              <input
+        <div className="mb-3">
+              <label className="form-label" htmlFor="unitTypeName">Name</label>
+              <input className="form-control"
                 {...register("unitTypeName", { required: "Name is required" })}
                 type="text"
                 id="name"
@@ -39,9 +44,9 @@ const UnitType: React.FC = () => {
               {errors.unitTypeName && <p>{errors.unitTypeName.message}</p>}
         </div>
 
-        <div>
-            <label htmlFor="unitTypeDescription">Description</label>
-            <input
+        <div className="mb-3">
+            <label className="form-label" htmlFor="unitTypeDescription">Description</label>
+            <input className="form-control"
               {...register("unitTypeDescription", { required: "Name is required" })}
               type="text"
               id="name"
@@ -49,8 +54,12 @@ const UnitType: React.FC = () => {
             {errors.unitTypeDescription && <p>{errors.unitTypeDescription.message}</p>}
         </div>     
 
-        <button type="submit">Submit</button>
-      </form>
+        <Button variant="primary" type="submit">Submit</Button>
+      </form>      
+      {modalContent.isShow &&
+       <AppModal content={modalContent.content} title={modalContent.title} isShow={modalContent.isShow}
+       handleShow={()=>setModalContent({...modalContent,isShow:false})}       
+       />}
   </div>
   );
 };

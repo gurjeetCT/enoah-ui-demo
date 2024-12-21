@@ -11,5 +11,11 @@ export const constants = {
         GET: 'GET',
         POST: 'POST'        
       },
-    baseUrl:'http://localhost:5067/'
+    baseUrl:'http://localhost:5067/',
+    statusCodes:{
+        INTERNAL_SERVER_ERROR:500,
+        SUCCESS:200
+    },
+    defaultMessage:'Record Saved Successfully'
+
 };
