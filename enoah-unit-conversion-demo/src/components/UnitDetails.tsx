@@ -6,6 +6,7 @@ import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import { AppModalProps, UnitDetailsRecord } from "../Utility/CommonProps";
 import AppModal from "../AppModal";
+import { Table } from "react-bootstrap";
 
 
 const UnitDetails: React.FC = () => {
@@ -15,6 +16,7 @@ const UnitDetails: React.FC = () => {
   const [unitTypeState, setUnitTypeId] = useState<any>({});
   const defaultModal : AppModalProps= {title:'Unit SubType', content:constants.defaultMessage,isShow:false};
   const [modalContent, setModalContent] = useState<AppModalProps>(defaultModal);
+  const [data, setData] = useState([]);
 
     const fetchUnitTypes = async () => {
       var url = constants.apiEndPoints.GET_ALL_UNIT_TYPES;        
@@ -26,6 +28,8 @@ const UnitDetails: React.FC = () => {
       setUnitTypeId(unitTypeId);
       var url = constants.apiEndPoints.GET_UNITS_BY_TYPE.replace('{typeid}',unitTypeId);        
       const resp = await ApiConnector(url, null, constants.apiMethod.GET, null, 'dummyToken');     
+      console.log(resp);
+      setData(resp);
     };
   
     
@@ -40,7 +44,8 @@ const UnitDetails: React.FC = () => {
     })
   
     useEffect(()=>{
-       fetchUnitTypes();      
+       fetchUnitTypes();   
+       fetchUnitSubTypes(0);   
     },[]);
   
   return (
@@ -80,7 +85,7 @@ const UnitDetails: React.FC = () => {
             <label className="form-label" htmlFor="numberOfBaseUnits">Base Unit Factor</label>
             <input className="form-control"
               {...register("numberOfBaseUnits", { required: "Factor is required" })}
-              type="number"
+              type="number" step={0.001}
               id="name"
             />
             {errors.numberOfBaseUnits && <p>{errors.numberOfBaseUnits.message}</p>}
@@ -91,6 +96,27 @@ const UnitDetails: React.FC = () => {
        <AppModal content={modalContent.content} title={modalContent.title} isShow={modalContent.isShow}
         handleShow={()=>setModalContent({...modalContent,isShow:false})}       
        />}
+       <div className="mtop20">
+          <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>UnitType</th>
+              <th>Unit Name</th>          
+              <th>Base Units</th>          
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((unitDetailsRecord:any) => {        
+            return (
+            <tr>
+            <td>{unitDetailsRecord.unitTypeName}</td>
+            <td>{unitDetailsRecord.unitName}</td>      
+            <td>{unitDetailsRecord.numberOfBaseUnits}</td>  
+          </tr>
+          )})}
+          </tbody>
+        </Table>
+    </div>
     </div>
   );
 };

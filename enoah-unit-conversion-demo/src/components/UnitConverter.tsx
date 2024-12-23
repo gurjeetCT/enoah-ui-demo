@@ -110,6 +110,7 @@ const UnitConverter: React.FC = () => {
             <input className="form-control"
               {...register("inputValue", { required: "Input is required" })}
               type="number"
+              step={0.001}
               id="inputValue"
             />
             {errors.inputValue && <p>{errors.inputValue.message}</p>}
@@ -120,7 +121,7 @@ const UnitConverter: React.FC = () => {
             <input className="form-control"
               {...register("userName", { required: "userName is required" })}
               type="text"
-              id="userName"
+              id="userName"              
             />
             {errors.userName && <p>{errors.userName.message}</p>}
         </div>  

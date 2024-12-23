@@ -11,7 +11,7 @@ export const constants = {
         GET: 'GET',
         POST: 'POST'        
       },
-    baseUrl:'http://localhost:5067/',
+    baseUrl:'https://gurjeetunitconverter.azurewebsites.net/',
     statusCodes:{
         INTERNAL_SERVER_ERROR:500,
         SUCCESS:200
